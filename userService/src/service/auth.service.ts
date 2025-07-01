@@ -1,3 +1,4 @@
+import { UpdatedUserRequest } from "../dto/auth.dto";
 import { IAuthRepository } from "../interface/auth.interface";
 import { Signin, Signup } from "../model/auth.model";
 import {
@@ -125,5 +126,26 @@ export class AuthService {
       }
       throw new APIError("Something went wrong while validating user");
     }
+  }
+  async updateUserProfile(email:string,input:UpdatedUserRequest) {
+    try {
+      const existingCustomer = await this._repository.FindCustomer({
+        email: email,
+      });
+      if (!existingCustomer) {
+        throw new NotFoundError("User not found");
+      }
+      const updatedUser = await this._repository.UpdateUserProfile(existingCustomer.email, input);
+      if (!updatedUser) {
+        throw new NotFoundError("User not updated");
+      }
+      return updatedUser;
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof APIError) {
+        throw error;
+      }
+      throw new APIError("Failed to update user profile");
+    }
+
   }
 }

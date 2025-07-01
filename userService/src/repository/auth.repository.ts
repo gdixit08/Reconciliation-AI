@@ -2,7 +2,8 @@ import { IAuthRepository } from "../interface/auth.interface";
 import { DB } from "../db/db.connection";
 import { Signup } from "../model/auth.model";
 import { User, users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, Update } from "drizzle-orm";
+import { UpdatedUserRequest } from "../dto/auth.dto";
 
 export class AuthRepository implements IAuthRepository {
   _db: typeof DB;
@@ -48,5 +49,16 @@ export class AuthRepository implements IAuthRepository {
       .set({ refresh_token:refreshToken })
       .where(eq(users.id, userId))
       .returning();
+  }
+  async UpdateUserProfile(
+    email: string,
+    input: UpdatedUserRequest
+  ): Promise<User> {
+    const [updatedUser] = await this._db
+      .update(users)
+      .set(input)
+      .where(eq(users.email, email))
+      .returning();
+    return updatedUser;
   }
 }

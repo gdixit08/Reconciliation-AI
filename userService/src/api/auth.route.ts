@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import { AuthService } from "../service/auth.service";
 import { AuthRepository } from "../repository/auth.repository";
-import { SigninRequest, SignupRequest } from "../dto/auth.dto";
+import { SigninRequest, SignupRequest, UpdatedUserRequest } from "../dto/auth.dto";
 import { RequestValidator } from "../utils/requestValidator";
 import { AccessTokenOptions, RefreshTokenOptions } from "../utils";
 import Authenticate from "../middleware/authenticate";
@@ -97,5 +97,44 @@ router.get(
     }
   }
 );
+router.patch(
+  "/updateUserProfile",
+  Authenticate,
+  async (req: Request, res: Response, next: Function) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+      const { errors, input } = await RequestValidator(
+        UpdatedUserRequest,
+        req.body
+      );
+      if (errors) {
+        res.status(400).json(errors);
+        return;
+      }
+      const updatedUser = await authService.updateUserProfile(user.email, input);
+      res.status(200).json({
+        message: "User profile updated successfully",
+        success: true,
+        data: {
+          id: updatedUser.id,
+          first_name: updatedUser.first_name,
+          last_name: updatedUser.last_name,
+          email: updatedUser.email,
+          company_name: updatedUser.Company_Name,
+          phone_number: updatedUser.phone_number,
+          profilePicture: updatedUser.profile_picture,
+        },
+      });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+)
+
 
 export default router;
