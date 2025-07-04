@@ -1,3 +1,4 @@
+import { ChangePasswordRequest } from "../dto/auth.dto";
 import { IAuthRepository } from "../interface/auth.interface";
 import { Signin, Signup } from "../model/auth.model";
 import {
@@ -126,4 +127,68 @@ export class AuthService {
       throw new APIError("Something went wrong while validating user");
     }
   }
-}
+ // Add this method to your AuthService class
+
+
+async changePassword(
+  userId: string, 
+  input: ChangePasswordRequest
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = input;
+
+    // Validate that new password and confirm password match
+    if (newPassword !== confirmPassword) {
+      return {
+        success: false,
+        message: "New password and confirm password do not match"
+      };
+    }
+
+    // Get user from database
+    const user = await this.authRepository.findUserById(userId);
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found"
+      };
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return {
+        success: false,
+        message: "Current password is incorrect"
+      };
+    }
+
+    // Check if new password is different from current password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return {
+        success: false,
+        message: "New password must be different from current password"
+      };
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password in database
+    await this.authRepository.updateUserPassword(userId, hashedNewPassword);
+
+    return {
+      success: true,
+      message: "Password changed successfully"
+    };
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return {
+      success: false,
+      message: "Internal server error"
+    };
+  }
+
+
