@@ -1,10 +1,11 @@
 import express, { NextFunction, Request, Response } from "express";
 import { AuthService } from "../service/auth.service";
 import { AuthRepository } from "../repository/auth.repository";
-import { SigninRequest, SignupRequest, UpdatedUserRequest } from "../dto/auth.dto";
+import { ChangePasswordRequest, SigninRequest, SignupRequest, UpdatedUserRequest } from "../dto/auth.dto";
 import { RequestValidator } from "../utils/requestValidator";
 import { AccessTokenOptions, RefreshTokenOptions } from "../utils";
 import Authenticate from "../middleware/authenticate";
+
 const router = express.Router();
 
 export const authService = new AuthService(new AuthRepository());
@@ -38,6 +39,7 @@ router.post(
     }
   }
 );
+
 router.post("/signin", async (req: Request, res: Response, next: Function) => {
   try {
     const { errors, input } = await RequestValidator(SigninRequest, req.body);
@@ -68,6 +70,7 @@ router.post("/signin", async (req: Request, res: Response, next: Function) => {
     return;
   }
 });
+
 router.get(
   "/getUserProfile",
   Authenticate,
@@ -97,6 +100,8 @@ router.get(
     }
   }
 );
+
+// PATCH: /updateUserProfile
 router.patch(
   "/updateUserProfile",
   Authenticate,
@@ -107,14 +112,13 @@ router.patch(
         res.status(401).json({ message: "Unauthorized" });
         return;
       }
-      const { errors, input } = await RequestValidator(
-        UpdatedUserRequest,
-        req.body
-      );
+
+      const { errors, input } = await RequestValidator(UpdatedUserRequest, req.body);
       if (errors) {
         res.status(400).json(errors);
         return;
       }
+
       const updatedUser = await authService.updateUserProfile(user.email, input);
       res.status(200).json({
         message: "User profile updated successfully",
@@ -134,7 +138,44 @@ router.patch(
       return;
     }
   }
-)
+);
 
+// PATCH: /change-password
+router.patch(
+  "/change-password",
+  Authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      const { errors, input } = await RequestValidator(ChangePasswordRequest, req.body);
+      if (errors) {
+        res.status(400).json(errors);
+        return;
+      }
+
+      const result = await authService.changePassword(user.id, input);
+      if (!result.success) {
+        res.status(400).json({
+          message: result.message || "Failed to change password",
+          success: false,
+        });
+        return;
+      }
+
+      res.status(200).json({
+        message: "Password changed successfully",
+        success: true,
+      });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
 
 export default router;
