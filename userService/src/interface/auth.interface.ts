@@ -8,4 +8,5 @@ export interface IAuthRepository{
     // FindUserByPhoneNumber({phone_number,}: {phone_number: string;}): Promise<Boolean>
     UpdateRefreshToken(userId: number, refreshToken: string):Promise<void> 
     UpdateUserProfile(email: string, input: UpdatedUserRequest): Promise<User>;
+    updateUserPassword(email: string, newPassword: string): Promise<User>;
 }

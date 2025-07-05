@@ -61,4 +61,15 @@ export class AuthRepository implements IAuthRepository {
       .returning();
     return updatedUser;
   }
+  async updateUserPassword(
+    email: string,
+    newPassword: string
+  ): Promise<User> {
+    const [changePasswordUser] =await this._db
+      .update(users)
+      .set({ password:newPassword })
+      .where(eq(users.email, email))
+      .returning();
+    return changePasswordUser;
+  }
 }

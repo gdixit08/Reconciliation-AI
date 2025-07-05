@@ -11,7 +11,6 @@ import {
   ValidatePassword,
   ValidationError,
 } from "../utils";
-import bcrypt from "bcrypt"; // required for password comparison and hashing
 
 export class AuthService {
   private _repository: IAuthRepository;
@@ -179,7 +178,7 @@ export class AuthService {
   }
 
   async changePassword(
-    userId: string,
+    email: string,
     input: ChangePasswordRequest
   ): Promise<{ success: boolean; message?: string }> {
     try {
@@ -192,7 +191,9 @@ export class AuthService {
         };
       }
 
-      const user = await this._repository.findUserById(userId);
+      const user = await this._repository.FindCustomer({
+        email: email,
+      });
       if (!user) {
         return {
           success: false,
@@ -200,7 +201,7 @@ export class AuthService {
         };
       }
 
-      const isCurrentPasswordValid = await bcrypt.compare(
+      const isCurrentPasswordValid = await ValidatePassword(
         currentPassword,
         user.password
       );
@@ -211,7 +212,7 @@ export class AuthService {
         };
       }
 
-      const isSamePassword = await bcrypt.compare(newPassword, user.password);
+      const isSamePassword = await ValidatePassword(newPassword, user.password);
       if (isSamePassword) {
         return {
           success: false,
@@ -219,11 +220,16 @@ export class AuthService {
         };
       }
 
-      const saltRounds = 12;
-      const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+      const salt = await GenerateSalt();
+      const hashedNewPassword = await GeneratePassword(newPassword, salt);
 
-      await this._repository.updateUserPassword(userId, hashedNewPassword);
-
+      const changePasswordUser=await this._repository.updateUserPassword(user.email, hashedNewPassword);
+      if (!changePasswordUser) {
+        return {
+          success: false,
+          message: "Failed to change password",
+        };
+      }
       return {
         success: true,
         message: "Password changed successfully",

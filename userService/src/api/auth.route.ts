@@ -101,7 +101,6 @@ router.get(
   }
 );
 
-// PATCH: /updateUserProfile
 router.patch(
   "/updateUserProfile",
   Authenticate,
@@ -140,7 +139,6 @@ router.patch(
   }
 );
 
-// PATCH: /change-password
 router.patch(
   "/change-password",
   Authenticate,
@@ -158,7 +156,7 @@ router.patch(
         return;
       }
 
-      const result = await authService.changePassword(user.id, input);
+      const result = await authService.changePassword(user.email, input);
       if (!result.success) {
         res.status(400).json({
           message: result.message || "Failed to change password",
