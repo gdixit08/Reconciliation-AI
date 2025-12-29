@@ -1,6 +1,6 @@
 # 🤖 Reconcile AI
 
-An **AI-powered reconciliation agent** that automates transaction matching, learns from feedback, and provides clear financial insights — including investment suggestions — across **multiple languages**.
+An **AI-powered reconciliation agent** that automates transaction matching, learns from feedback, and provides clear financial insights - including investment suggestions - across **multiple languages**.
 ---
 
 ## 🎥 Project Demo
